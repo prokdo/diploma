@@ -3,26 +3,27 @@ package graph
 import "slices"
 
 func checkSolution[T comparable](g *graph[T], x []bool) bool {
-	for i := range g.size {
-		if x[i] {
-			for j := range g.size {
-				if i != j && x[j] && g.cache.AdjMatrix.Get(i, j) {
-					return false
-				}
-			}
-		}
-	}
-	return true
+    for i := range x {
+        if !x[i] {
+            continue
+        }
+        for j := i + 1; j < len(x); j++ {
+            if x[j] && g.cache.AdjMatrix.Get(i, j) {
+                return false
+            }
+        }
+    }
+    return true
 }
 
 func computeCardinality(x []bool) int {
-	sum := 0
-	for _, v := range x {
-		if v {
-			sum++
-		}
-	}
-	return sum
+    count := 0
+    for _, b := range x {
+        if b {
+            count++
+        }
+    }
+    return count
 }
 
 func ComputeF1Factor[T comparable](sample, solution []T) float64 {

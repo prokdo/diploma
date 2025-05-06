@@ -17,7 +17,7 @@ import (
 )
 
 func NewResultsPage(state *AppState) (fyne.CanvasObject, func()) {
-	headers := []string{"ID", "Время (мс)", "F1-фактор", "Мощность"}
+	headers := []string{"ID", "Время (нс)", "F1-фактор", "Мощность"}
 
 	exactResults := binding.NewUntypedList()
 	approxResults := binding.NewUntypedList()
@@ -92,7 +92,7 @@ func NewResultsPage(state *AppState) (fyne.CanvasObject, func()) {
 				writer := csv.NewWriter(file)
 				defer writer.Flush()
 
-				writer.Write([]string{"ID", "Время (мс)", "F1-фактор", "Мощность"})
+				writer.Write([]string{"ID", "Время (нс)", "F1-фактор", "Мощность"})
 
 				length := results.Length()
 				for i := range length {

@@ -148,7 +148,7 @@ func NewCalculationPage(state *AppState) (fyne.CanvasObject, func()) {
 					case *GreedySearchConfig:
 						solution = graph.MISGreedySearch(ctx, g, cfg.Iterations)
 					}
-					elapsed := time.Since(start).Microseconds()
+					elapsed := time.Since(start).Nanoseconds()
 
 					var f1 float64
 					if _, ok := mc.(*GreedySearchConfig); ok {
@@ -165,7 +165,7 @@ func NewCalculationPage(state *AppState) (fyne.CanvasObject, func()) {
 						F1Factor: f1,
 					})
 
-					appendLog(fmt.Sprintf("[%s] Время: %d мкс | F1: %.2f", methodName, elapsed, f1))
+					appendLog(fmt.Sprintf("[%s] Время: %d нс | F1: %.2f", methodName, elapsed, f1))
 
 					currentStep++
 					_ = progressVal.Set(currentStep / totalSteps)

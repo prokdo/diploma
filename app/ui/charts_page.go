@@ -134,7 +134,7 @@ func NewChartsPage(state *AppState) (fyne.CanvasObject, func()) {
 
 	now := time.Now().Format("2006-01-02T15-04-05")
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Время выполнения", buildChartTab("Время выполнения", "Время (мс)", getTimeData, now+"_time")),
+		container.NewTabItem("Время выполнения", buildChartTab("Время выполнения", "Время (нс)", getTimeData, now+"_time")),
 		container.NewTabItem("Точность (F1)", buildChartTab("Точность (F1)", "F1-фактор", getF1Data, now+"_f1")),
 		container.NewTabItem("Мощность решений", buildChartTab("Мощность решений", "Размер множества", getCardinalityData, now+"_cardinality")),
 	)
