@@ -158,6 +158,7 @@ func NewCalculationPage(state *AppState) (fyne.CanvasObject, func()) {
 					}
 
 					state.Results = append(state.Results, &Result{
+						Graph:    g,
 						RunId:    i + 1,
 						Method:   string(methodName),
 						Time:     elapsed,

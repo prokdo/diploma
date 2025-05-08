@@ -15,7 +15,7 @@ func NewApp() fyne.Window {
 
 	w := a.NewWindow("Поиск МВУМ")
 	w.Resize(fyne.NewSize(1280, 920))
-	w.SetFixedSize(true)
+	// w.SetFixedSize(true)
 	w.CenterOnScreen()
 
 	state := &ui.AppState{

@@ -17,57 +17,8 @@ import (
 )
 
 func NewResultsPage(state *AppState) (fyne.CanvasObject, func()) {
-	headers := []string{"ID", "Время (нс)", "F1-фактор", "Мощность"}
-
 	exactResults := binding.NewUntypedList()
 	approxResults := binding.NewUntypedList()
-
-	buildTable := func(results binding.UntypedList) *widget.Table {
-		table := widget.NewTable(
-			func() (int, int) {
-				length := results.Length()
-				return length + 1, len(headers)
-			},
-			func() fyne.CanvasObject {
-				return widget.NewLabel("")
-			},
-			func(cell widget.TableCellID, o fyne.CanvasObject) {
-				label := o.(*widget.Label)
-				i, j := cell.Row, cell.Col
-
-				if i == 0 {
-					label.SetText(headers[j])
-					label.TextStyle = fyne.TextStyle{Bold: true}
-				} else {
-					item, _ := results.GetValue(i - 1)
-					if item == nil {
-						label.SetText("")
-						return
-					}
-					res := item.(*Result)
-
-					switch j {
-					case 0:
-						label.SetText(strconv.Itoa(res.RunId))
-					case 1:
-						label.SetText(strconv.FormatInt(res.Time, 10))
-					case 2:
-						label.SetText(fmt.Sprintf("%.2f", res.F1Factor))
-					case 3:
-						label.SetText(strconv.Itoa(len(res.Result)))
-					}
-				}
-			},
-		)
-
-		table.SetColumnWidth(0, 60)
-		table.SetColumnWidth(1, 100)
-		table.SetColumnWidth(2, 80)
-		table.SetColumnWidth(3, 80)
-
-		table.SetRowHeight(0, 30)
-		return table
-	}
 
 	saveBtn := widget.NewButton("Сохранить в CSV", func() {
 		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
@@ -121,12 +72,6 @@ func NewResultsPage(state *AppState) (fyne.CanvasObject, func()) {
 		}, fyne.CurrentApp().Driver().AllWindows()[0])
 	})
 
-	exactTable := buildTable(exactResults)
-	approxTable := buildTable(approxResults)
-
-	exactScroll := container.NewVScroll(exactTable)
-	approxScroll := container.NewVScroll(approxTable)
-
 	exactHeader := widget.NewLabel("Метод Магу")
 	exactHeader.Alignment = fyne.TextAlignCenter
 	exactHeader.TextStyle = fyne.TextStyle{Bold: true}
@@ -138,13 +83,13 @@ func NewResultsPage(state *AppState) (fyne.CanvasObject, func()) {
 	left := container.NewBorder(
 		exactHeader,
 		nil, nil, nil,
-		exactScroll,
+		buildVirtualResultsList(exactResults),
 	)
 
 	right := container.NewBorder(
 		approxHeader,
 		nil, nil, nil,
-		approxScroll,
+		buildVirtualResultsList(approxResults),
 	)
 
 	split := container.NewHSplit(left, right)
@@ -166,10 +111,88 @@ func NewResultsPage(state *AppState) (fyne.CanvasObject, func()) {
 				approxResults.Append(res)
 			}
 		}
-
-		exactTable.Refresh()
-		approxTable.Refresh()
 	}
 
 	return container.NewBorder(nil, saveBtn, nil, nil, split), initFunc
+}
+
+func buildVirtualResultsList(results binding.UntypedList) fyne.CanvasObject {
+	headers := container.NewGridWithColumns(5,
+		container.NewCenter(widget.NewLabel("ID")),
+		container.NewCenter(widget.NewLabel("Время (нс)")),
+		container.NewCenter(widget.NewLabel("F1-фактор")),
+		container.NewCenter(widget.NewLabel("Мощность")),
+	)
+
+	list := widget.NewList(
+		func() int {
+			return results.Length()
+		},
+		func() fyne.CanvasObject {
+			return container.NewGridWithColumns(5,
+				container.NewCenter(widget.NewLabel("")),
+				container.NewCenter(widget.NewLabel("")),
+				container.NewCenter(widget.NewLabel("")),
+				container.NewCenter(widget.NewLabel("")),
+				container.NewCenter(widget.NewButton("Сохранить", nil)),
+			)
+		},
+		func(id widget.ListItemID, item fyne.CanvasObject) {
+			val, _ := results.GetValue(id)
+			res := val.(*Result)
+
+			row, _ := item.(*fyne.Container)
+			if row == nil || len(row.Objects) < 5 {
+				return
+			}
+
+			row.Objects[0].(*fyne.Container).Objects[0] = widget.NewLabel(strconv.Itoa(res.RunId))
+			row.Objects[1].(*fyne.Container).Objects[0] = widget.NewLabel(strconv.FormatInt(res.Time, 10))
+			row.Objects[2].(*fyne.Container).Objects[0] = widget.NewLabel(fmt.Sprintf("%.2f", res.F1Factor))
+			row.Objects[3].(*fyne.Container).Objects[0] = widget.NewLabel(strconv.Itoa(len(res.Result)))
+
+			btn := row.Objects[4].(*fyne.Container).Objects[0].(*widget.Button)
+			btn.OnTapped = func(r *Result) func() {
+				return func() {
+					dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+						if err != nil || uri == nil {
+							if err != nil {
+								dialog.ShowError(err, fyne.CurrentApp().Driver().AllWindows()[0])
+							}
+							return
+						}
+						dir := uri.Path()
+
+						var accuracyPrefix string
+						if res.Method == "Метод Магу" {
+							accuracyPrefix = "exact"
+						} else {
+							accuracyPrefix = "approx"
+						}
+						filenameBase := fmt.Sprintf("%s_result_run%d", accuracyPrefix, r.RunId)
+
+						dotPath := filepath.Join(dir, filenameBase+".dot")
+						// pngPath := filepath.Join(dir, filenameBase+".png")
+
+						dotContent := r.Graph.Dot(r.Result)
+						os.WriteFile(dotPath, []byte(dotContent), 0644)
+
+						// utils.RenderDotToFile(r.Graph, pngPath, r.Result)
+
+						dialog.ShowInformation("Успех", "Файлы успешно сохранены!", fyne.CurrentApp().Driver().AllWindows()[0])
+					}, fyne.CurrentApp().Driver().AllWindows()[0])
+				}
+			}(res)
+
+			for _, obj := range row.Objects {
+				obj.Refresh()
+			}
+		},
+	)
+
+	results.AddListener(binding.NewDataListener(func() {
+		list.Refresh()
+	}))
+
+	return container.NewBorder(headers, nil, nil, nil, list)
 }

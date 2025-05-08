@@ -49,6 +49,7 @@ type RunConfig struct {
 }
 
 type Result struct {
+	Graph    graph.Graph[string]
 	RunId    int
 	Method   string
 	Time     int64
