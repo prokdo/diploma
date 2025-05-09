@@ -112,7 +112,7 @@ func NewCalculationPage(state *AppState) (fyne.CanvasObject, func()) {
 				}
 
 				var g graph.Graph[string]
-				if state.RunConfig.IsGraphFixed {
+				if state.RunConfig.IsGraphFixed || i == 0 {
 					g = state.Graph
 				} else {
 					if state.GeneratorConfig == nil {
