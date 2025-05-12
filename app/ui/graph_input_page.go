@@ -35,20 +35,32 @@ func NewGraphInputPage(state *AppState) (fyne.CanvasObject, func()) {
 
 	previewStack := container.NewStack(previewText)
 
-	visualizeButton := widget.NewButton("Визуализировать", func() {
+	visualizeButton := widget.NewButton("Визуализировать", nil)
+	visualizeButton.Disable()
+
+	visualizeButton.OnTapped = func() {
 		if state.Graph == nil {
 			return
 		}
-		img, err := utils.RenderDotToImage(state.Graph)
-		if err != nil {
-			dialog.ShowError(fmt.Errorf("ошибка визуализации: %w", err), fyne.CurrentApp().Driver().AllWindows()[0])
-			return
-		}
-		previewImage.SetImage(img)
-		previewStack.Objects = []fyne.CanvasObject{previewImage}
-		previewStack.Refresh()
-	})
-	visualizeButton.Disable()
+
+		go func() {
+			state.NavigationState.NextButton.Disable()
+			visualizeButton.Disable()
+
+			img, err := utils.RenderDotToImage(state.Graph)
+
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("ошибка визуализации: %w", err), fyne.CurrentApp().Driver().AllWindows()[0])
+				return
+			}
+			previewImage.SetImage(img)
+			previewStack.Objects = []fyne.CanvasObject{previewImage}
+			previewStack.Refresh()
+
+			state.NavigationState.NextButton.Enable()
+			visualizeButton.Enable()
+		}()
+	}
 
 	resetVisualization := func() {
 		previewStack.Objects = []fyne.CanvasObject{previewText}

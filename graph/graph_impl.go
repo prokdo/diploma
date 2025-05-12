@@ -588,9 +588,9 @@ func (g *graph[T]) SetWeight(from, to *T, weight float64) bool {
 }
 
 func (g *graph[T]) Dot(verticesToColor ...[]T) string {
-	var toColor []T
+	var solution []T
 	if len(verticesToColor) > 0 {
-		toColor = verticesToColor[0]
+		solution = verticesToColor[0]
 	}
 
 	var buf bytes.Buffer
@@ -601,22 +601,12 @@ func (g *graph[T]) Dot(verticesToColor ...[]T) string {
 		buf.WriteString("graph {\n")
 	}
 
-	vertexLines := make([]string, len(g.indexToVertex))
-	var wg sync.WaitGroup
-	for i, v := range g.indexToVertex {
-		wg.Add(1)
-		go func(i int, v T) {
-			defer wg.Done()
-			if slices.Contains(toColor, v) {
-				vertexLines[i] = fmt.Sprintf("  %d [label=%v, color=red];\n", i, v)
-			} else {
-				vertexLines[i] = fmt.Sprintf("  %d [label=%v];\n", i, v)
-			}
-		}(i, v)
-	}
-	wg.Wait()
-	for _, line := range vertexLines {
-		buf.WriteString(line)
+	for _, v := range g.GetAllVertices() {
+		if slices.Contains(solution, v) {
+			buf.WriteString(fmt.Sprintf("  %v [color=red, style=filled];\n", v))
+		} else {
+			buf.WriteString(fmt.Sprintf("  %v;\n", v))
+		}
 	}
 
 	var connector string
@@ -625,43 +615,40 @@ func (g *graph[T]) Dot(verticesToColor ...[]T) string {
 	} else {
 		connector = "--"
 	}
-	edgeChan := make(chan string, 100)
+
+	seenEdges := make(map[[2]string]bool)
+
 	for from, neighbors := range g.adjList {
-		fromIdx, ok := g.vertexToIndex[from]
-		if !ok {
-			continue
-		}
-		wg.Add(1)
-		go func(fromIdx int, neighbors []T) {
-			defer wg.Done()
-			for _, to := range neighbors {
-				toIdx, ok := g.vertexToIndex[to]
-				if !ok {
+		fromStr := fmt.Sprintf("%v", from)
+
+		for _, to := range neighbors {
+			toStr := fmt.Sprintf("%v", to)
+
+			if g.gtype == Undirected {
+				key := [2]string{fromStr, toStr}
+				if fromStr > toStr {
+					key = [2]string{toStr, fromStr}
+				}
+				if seenEdges[key] {
 					continue
 				}
-				if g.gtype == Undirected && fromIdx > toIdx {
-					continue
-				}
-				edgeStr := fmt.Sprintf("  %d %s %d", fromIdx, connector, toIdx)
-				if g.cache.WeightMatrix != nil {
-					weight := g.cache.WeightMatrix.Get(fromIdx, toIdx)
-					if weight != NO_WEIGHT {
-						edgeStr += fmt.Sprintf(" [weight=%v]", weight)
-					}
-				}
-				edgeStr += ";\n"
-				edgeChan <- edgeStr
+				seenEdges[key] = true
 			}
-		}(fromIdx, neighbors)
-	}
 
-	go func() {
-		wg.Wait()
-		close(edgeChan)
-	}()
+			edgeStr := fmt.Sprintf("  %v %s %v", from, connector, to)
 
-	for edgeLine := range edgeChan {
-		buf.WriteString(edgeLine)
+			if g.cache.WeightMatrix != nil {
+				fromIdx, _ := g.vertexToIndex[from]
+				toIdx, _ := g.vertexToIndex[to]
+				weight := g.cache.WeightMatrix.Get(fromIdx, toIdx)
+				if weight != NO_WEIGHT {
+					edgeStr += fmt.Sprintf(" [weight=%v]", weight)
+				}
+			}
+			edgeStr += ";\n"
+
+			buf.WriteString(edgeStr)
+		}
 	}
 
 	buf.WriteString("}\n")
