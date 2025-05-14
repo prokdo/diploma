@@ -2,15 +2,10 @@ package graph
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 )
 
-func MISMaghout[T comparable](ctx context.Context, g Graph[T], parallelDepth int) []T {
-	if parallelDepth <= 0 {
-		return nil
-	}
-
+func MISMaghout[T comparable](ctx context.Context, g Graph[T]) []T {
 	graph, ok := g.(*graph[T])
 	if !ok {
 		return nil
@@ -21,53 +16,13 @@ func MISMaghout[T comparable](ctx context.Context, g Graph[T], parallelDepth int
 	}
 
 	n := graph.size
-
-	if parallelDepth > 20 {
-		parallelDepth = 20
-	}
-
 	bestCount := int32(-1)
 	var bestSolution atomic.Value
 	temp := make([]bool, n)
 	bestSolution.Store(&temp)
 
-	var wg sync.WaitGroup
-	total := 1 << parallelDepth
-
-	for mask := range total {
-		if ctx.Err() != nil {
-			break
-		}
-
-		wg.Add(1)
-		go func(mask int) {
-			defer wg.Done()
-
-			current := make([]bool, n)
-			valid := true
-
-			for i := range parallelDepth {
-				if ctx.Err() != nil {
-					return
-				}
-				current[i] = (mask>>i)&1 == 1
-				if current[i] && !checkSolutionPartial(graph, current, i) {
-					valid = false
-					break
-				}
-			}
-
-			if valid {
-				backtrack(ctx, graph, current, parallelDepth, &bestCount, &bestSolution)
-			}
-		}(mask)
-	}
-
-	wg.Wait()
-
-	if ctx.Err() != nil {
-		return nil
-	}
+	current := make([]bool, n)
+	backtrack(ctx, graph, current, 0, &bestCount, &bestSolution)
 
 	solution := bestSolution.Load().(*[]bool)
 	var result []T
@@ -115,20 +70,5 @@ func backtrack[T comparable](
 	}
 
 	current[i] = true
-	if checkSolutionPartial(g, current, i) {
-		backtrack(ctx, g, current, i+1, bestCount, bestSolution)
-	}
-}
-
-func checkSolutionPartial[T comparable](g *graph[T], x []bool, i int) bool {
-	if !x[i] {
-		return true
-	}
-
-	for j := range i {
-		if x[j] && g.cache.AdjMatrix.Get(i, j) {
-			return false
-		}
-	}
-	return true
+	backtrack(ctx, g, current, i+1, bestCount, bestSolution)
 }

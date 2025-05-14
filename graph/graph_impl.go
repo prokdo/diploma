@@ -248,29 +248,9 @@ func (g *graph[T]) GetAllEdges() []*EdgeOptions[T] {
 }
 
 func (g *graph[T]) GetAllVertices() []T {
-	resultChan := make(chan *T, len(g.indexToVertex))
-	var wg sync.WaitGroup
-
-	for _, v := range g.indexToVertex {
-		v := v
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			resultChan <- &v
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
-
-	vertices := make([]T, 0, len(g.indexToVertex))
-	for vertex := range resultChan {
-		vertices = append(vertices, *vertex)
-	}
-
-	return vertices
+	result := make([]T, len(g.indexToVertex))
+	copy(result, g.indexToVertex)
+	return result
 }
 
 func (g *graph[T]) GetEdge(from, to *T) *EdgeOptions[T] {
@@ -601,11 +581,13 @@ func (g *graph[T]) Dot(verticesToColor ...[]T) string {
 		buf.WriteString("graph {\n")
 	}
 
+	buf.WriteString("layout=circo;\n")
+
 	for _, v := range g.GetAllVertices() {
 		if slices.Contains(solution, v) {
-			buf.WriteString(fmt.Sprintf("  %v [color=red, style=filled];\n", v))
+			buf.WriteString(fmt.Sprintf("  %v [color=red, style=filled, shape=circle];\n", v))
 		} else {
-			buf.WriteString(fmt.Sprintf("  %v;\n", v))
+			buf.WriteString(fmt.Sprintf("  %v [shape=circle];\n", v))
 		}
 	}
 

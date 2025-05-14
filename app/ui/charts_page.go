@@ -17,6 +17,7 @@ import (
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
+	"gonum.org/v1/plot/vg/draw"
 )
 
 func NewChartsPage(state *AppState) (fyne.CanvasObject, func()) {
@@ -38,17 +39,33 @@ func NewChartsPage(state *AppState) (fyne.CanvasObject, func()) {
 		p.Y.Label.Text = yLabel
 		p.BackgroundColor = color.White
 
-		exactLine, _ := plotter.NewLine(exactData)
-		exactLine.Color = color.RGBA{0, 0, 255, 255}
-		exactLine.Width = vg.Points(2)
+		if len(state.Results) > 2 {
+			exact, _ := plotter.NewLine(exactData)
+			exact.LineStyle.Dashes = []vg.Length{vg.Points(3), vg.Points(3)}
+			exact.Color = color.RGBA{0, 0, 255, 255}
+			exact.Width = vg.Points(1)
 
-		approxLine, _ := plotter.NewLine(approxData)
-		approxLine.Color = color.RGBA{255, 0, 0, 255}
-		approxLine.Width = vg.Points(2)
+			approx, _ := plotter.NewLine(approxData)
+			approx.LineStyle.Dashes = []vg.Length{vg.Points(3), vg.Points(1)}
+			approx.Color = color.RGBA{255, 0, 0, 255}
+			approx.Width = vg.Points(1)
 
-		p.Add(exactLine, approxLine)
-		p.Legend.Add("Метод Магу", exactLine)
-		p.Legend.Add("Жадный поиск", approxLine)
+			p.Add(exact, approx)
+			p.Legend.Add("Метод Магу", exact)
+			p.Legend.Add("Жадный поиск", approx)
+		} else {
+			exact, _ := plotter.NewScatter(exactData)
+			exact.Shape = draw.RingGlyph{}
+			exact.Color = color.RGBA{0, 0, 255, 255}
+
+			approx, _ := plotter.NewScatter(approxData)
+			approx.Shape = draw.CrossGlyph{}
+			approx.Color = color.RGBA{255, 0, 0, 255}
+
+			p.Add(exact, approx)
+			p.Legend.Add("Метод Магу", exact)
+			p.Legend.Add("Жадный поиск", approx)
+		}
 
 		buf := new(bytes.Buffer)
 		writerTo, _ := p.WriterTo(8*vg.Inch, 6*vg.Inch, "png")

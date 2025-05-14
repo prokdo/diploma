@@ -5,7 +5,6 @@ go 1.24.2
 require (
 	fyne.io/fyne/v2 v2.6.1-0.20250502173754-d73b72f8cbad
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
-	github.com/goccy/go-graphviz v0.2.0
 	gonum.org/v1/plot v0.16.0
 )
 
@@ -19,7 +18,6 @@ require (
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect
 	github.com/campoy/embedmd v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/fredbi/uri v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fyne-io/gl-js v0.1.0 // indirect
@@ -44,7 +42,6 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
-	github.com/tetratelabs/wazero v1.8.1 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	golang.org/x/image v0.25.0 // indirect
 	golang.org/x/net v0.35.0 // indirect

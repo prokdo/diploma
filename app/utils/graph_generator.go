@@ -37,6 +37,9 @@ func GenerateGraph(gt graph.GraphType, minVertices, maxVertices int, edgeProb fl
 				from := fmt.Sprint(i + 1)
 				to := fmt.Sprint(j + 1)
 				g.AddEdge(&from, &to)
+			} else {
+				v := fmt.Sprint(i + 1)
+				g.AddVertex(&v)
 			}
 		}
 	}

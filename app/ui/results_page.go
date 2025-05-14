@@ -177,7 +177,7 @@ func buildVirtualResultsList(results binding.UntypedList) fyne.CanvasObject {
 						dotContent := r.Graph.Dot(r.Result)
 						os.WriteFile(dotPath, []byte(dotContent), 0644)
 
-						// utils.RenderDotToFile(r.Graph, pngPath, r.Result)
+						// utils.SaveCanvasToFile(graphCanvas, pngPath)
 
 						dialog.ShowInformation("Успех", "Файлы успешно сохранены!", fyne.CurrentApp().Driver().AllWindows()[0])
 					}, fyne.CurrentApp().Driver().AllWindows()[0])

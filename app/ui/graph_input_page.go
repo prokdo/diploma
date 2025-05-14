@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image/color"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -28,12 +29,7 @@ func NewGraphInputPage(state *AppState) (fyne.CanvasObject, func()) {
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Alignment = fyne.TextAlignCenter
 
-	var previewImage = NewZoomableImage(nil)
-	previewText := canvas.NewText("Нажмите 'Визуализировать', чтобы отобразить граф", nil)
-	previewText.Alignment = fyne.TextAlignCenter
-	previewText.TextStyle = fyne.TextStyle{Italic: true}
-
-	previewStack := container.NewStack(previewText)
+	previewStack := container.NewStack()
 
 	visualizeButton := widget.NewButton("Визуализировать", nil)
 	visualizeButton.Disable()
@@ -44,26 +40,22 @@ func NewGraphInputPage(state *AppState) (fyne.CanvasObject, func()) {
 		}
 
 		go func() {
-			state.NavigationState.NextButton.Disable()
-			visualizeButton.Disable()
-
-			img, err := utils.RenderDotToImage(state.Graph)
-
-			if err != nil {
-				dialog.ShowError(fmt.Errorf("ошибка визуализации: %w", err), fyne.CurrentApp().Driver().AllWindows()[0])
+			graphCanvas := utils.RenderGraphToFyneContainer(state.Graph, previewStack.Size())
+			if graphCanvas == nil {
+				dialog.ShowError(fmt.Errorf("не удалось отрисовать граф"), fyne.CurrentApp().Driver().AllWindows()[0])
 				return
 			}
-			previewImage.SetImage(img)
-			previewStack.Objects = []fyne.CanvasObject{previewImage}
-			previewStack.Refresh()
 
 			state.NavigationState.NextButton.Enable()
 			visualizeButton.Enable()
+
+			previewStack.Objects = []fyne.CanvasObject{graphCanvas}
+			previewStack.Refresh()
 		}()
 	}
 
 	resetVisualization := func() {
-		previewStack.Objects = []fyne.CanvasObject{previewText}
+		previewStack.Objects = nil
 		previewStack.Refresh()
 		visualizeButton.Enable()
 	}
@@ -167,7 +159,12 @@ func NewGraphInputPage(state *AppState) (fyne.CanvasObject, func()) {
 		layout.NewSpacer(),
 	)
 
-	rightSide := container.NewBorder(nil, visualizeButton, nil, nil, container.NewPadded(previewStack))
+	bg := canvas.NewRectangle(color.White)
+	bg.Resize(fyne.NewSize(800, 800))
+	rightContent := container.NewStack(bg, previewStack)
+	rightContent.Resize(fyne.NewSize(800, 800))
+
+	rightSide := container.NewBorder(nil, visualizeButton, nil, nil, container.NewPadded(rightContent))
 	split := container.NewHSplit(leftSide, rightSide)
 	split.Offset = 0.15
 

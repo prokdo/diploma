@@ -143,7 +143,7 @@ func NewCalculationPage(state *AppState) (fyne.CanvasObject, func()) {
 					start := time.Now()
 					switch cfg := mc.(type) {
 					case *MaghoutConfig:
-						exactSolution = graph.MISMaghout(ctx, g, cfg.ParallelDepth)
+						exactSolution = graph.MISMaghout(ctx, g)
 						solution = exactSolution
 					case *GreedySearchConfig:
 						solution = graph.MISGreedySearch(ctx, g, cfg.Iterations)

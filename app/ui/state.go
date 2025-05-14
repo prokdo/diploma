@@ -27,7 +27,7 @@ type MethodConfig interface {
 
 type MaghoutConfig struct {
 	MethodConfig
-	ParallelDepth int
+	// ParallelDepth int
 }
 
 func (m *MaghoutConfig) MethodType() MethodType {
