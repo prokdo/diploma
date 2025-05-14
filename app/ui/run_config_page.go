@@ -13,16 +13,6 @@ import (
 )
 
 func NewRunConfigPage(state *AppState) (fyne.CanvasObject, func()) {
-	initFunc := func() {
-		state.NavigationState.BackButton.Enable()
-
-		if state.RunConfig == nil {
-			state.NavigationState.NextButton.Disable()
-		} else {
-			state.NavigationState.NextButton.Enable()
-		}
-	}
-
 	title := canvas.NewText("Конфигурация запуска", nil)
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Alignment = fyne.TextAlignCenter
@@ -31,10 +21,6 @@ func NewRunConfigPage(state *AppState) (fyne.CanvasObject, func()) {
 	runsEntry.SetPlaceHolder("Количество запусков")
 
 	fixGraphCheck := widget.NewCheck("", nil)
-	if state.GeneratorConfig == nil && state.Graph != nil {
-		fixGraphCheck.SetChecked(true)
-		fixGraphCheck.Disable()
-	}
 
 	fixGraphLabel := widget.NewLabel("Фиксировать граф")
 	fixGraphLabel.TextStyle = fyne.TextStyle{Bold: true}
@@ -68,5 +54,20 @@ func NewRunConfigPage(state *AppState) (fyne.CanvasObject, func()) {
 	)
 
 	centered := container.NewCenter(container.NewVBox(form))
+
+	initFunc := func() {
+		state.NavigationState.BackButton.Enable()
+
+		if state.RunConfig == nil {
+			state.NavigationState.NextButton.Disable()
+		} else {
+			state.NavigationState.NextButton.Enable()
+		}
+
+		if state.GeneratorConfig == nil && state.Graph != nil {
+			fixGraphCheck.SetChecked(true)
+			fixGraphCheck.Disable()
+		}
+	}
 	return centered, initFunc
 }
