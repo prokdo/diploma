@@ -27,12 +27,12 @@ func NewMethodConfigPage(state *AppState) (fyne.CanvasObject, func()) {
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Alignment = fyne.TextAlignCenter
 
-	// maghoutLabel := widget.NewLabel("Метод Магу")
-	// maghoutLabel.Alignment = fyne.TextAlignCenter
-	// maghoutLabel.TextStyle = fyne.TextStyle{Bold: true}
+	maghoutLabel := widget.NewLabel("Метод Магу")
+	maghoutLabel.Alignment = fyne.TextAlignCenter
+	maghoutLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	// parallelismDepthEntry := widget.NewEntry()
-	// parallelismDepthEntry.SetPlaceHolder("Глубина параллельности")
+	parallelismDepthEntry := widget.NewEntry()
+	parallelismDepthEntry.SetPlaceHolder("Глубина параллельности")
 
 	hybridLabel := widget.NewLabel("Жадный поиск")
 	hybridLabel.Alignment = fyne.TextAlignCenter
@@ -42,13 +42,13 @@ func NewMethodConfigPage(state *AppState) (fyne.CanvasObject, func()) {
 	localSearchIterationsEntry.SetPlaceHolder("Итерации локального поиска")
 
 	saveButton := widget.NewButtonWithIcon("Сохранить", theme.ConfirmIcon(), func() {
-		// parallelDepth, err := utils.ParseUint(parallelismDepthEntry.Text)
-		// if err != nil {
-		// 	dialog.ShowError(err, fyne.CurrentApp().Driver().AllWindows()[0])
-		// 	return
-		// }
+		parallelDepth, err := utils.ParseUint(parallelismDepthEntry.Text)
+		if err != nil {
+			dialog.ShowError(err, fyne.CurrentApp().Driver().AllWindows()[0])
+			return
+		}
 
-		// mCfg := &MaghoutConfig{ParallelDepth: parallelDepth}
+		mCfg := &MaghoutConfig{ParallelDepth: parallelDepth}
 
 		localIters, err := utils.ParseUint(localSearchIterationsEntry.Text)
 		if err != nil {
@@ -56,7 +56,7 @@ func NewMethodConfigPage(state *AppState) (fyne.CanvasObject, func()) {
 			return
 		}
 
-		mCfg := &MaghoutConfig{}
+		// mCfg := &MaghoutConfig{}
 		hCfg := &GreedySearchConfig{Iterations: localIters}
 
 		state.MethodConfigs = nil
@@ -70,8 +70,8 @@ func NewMethodConfigPage(state *AppState) (fyne.CanvasObject, func()) {
 		layout.NewSpacer(),
 		container.NewPadded(title),
 		layout.NewSpacer(),
-		// container.NewPadded(maghoutLabel),
-		// container.NewPadded(parallelismDepthEntry),
+		container.NewPadded(maghoutLabel),
+		container.NewPadded(parallelismDepthEntry),
 		layout.NewSpacer(),
 		container.NewPadded(hybridLabel),
 		container.NewPadded(localSearchIterationsEntry),

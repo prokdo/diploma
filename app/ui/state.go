@@ -18,7 +18,6 @@ type MethodType string
 const (
 	MaghoutMethod      MethodType = "Метод Магу"
 	GreedySearchMethod MethodType = "Жадный поиск"
-	// GeneticMethod      MethodType = "Генетический алгоритм"
 )
 
 type MethodConfig interface {
@@ -27,7 +26,7 @@ type MethodConfig interface {
 
 type MaghoutConfig struct {
 	MethodConfig
-	// ParallelDepth int
+	ParallelDepth int
 }
 
 func (m *MaghoutConfig) MethodType() MethodType {

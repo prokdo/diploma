@@ -1,6 +1,6 @@
 module graphmis
 
-go 1.24.2
+go 1.24.3
 
 require (
 	fyne.io/fyne/v2 v2.6.1-0.20250502173754-d73b72f8cbad

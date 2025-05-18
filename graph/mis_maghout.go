@@ -2,12 +2,13 @@ package graph
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 )
 
-func MISMaghout[T comparable](ctx context.Context, g Graph[T]) []T {
+func MISMaghout[T comparable](ctx context.Context, g Graph[T], parallelDepth int) []T {
 	graph, ok := g.(*graph[T])
-	if !ok {
+	if !ok || graph == nil {
 		return nil
 	}
 
@@ -16,18 +17,55 @@ func MISMaghout[T comparable](ctx context.Context, g Graph[T]) []T {
 	}
 
 	n := graph.size
-	bestCount := int32(-1)
+	if n == 0 {
+		return nil
+	}
+
+	if parallelDepth <= 0 || parallelDepth > n {
+		parallelDepth = n
+	}
+	if parallelDepth > 16 {
+		parallelDepth = 16
+	}
+
+	total := 1 << parallelDepth
+
+	var wg sync.WaitGroup
+	var bestCount int32 = -1
 	var bestSolution atomic.Value
-	temp := make([]bool, n)
-	bestSolution.Store(&temp)
+	bestSolution.Store(make([]bool, n))
 
-	current := make([]bool, n)
-	backtrack(ctx, graph, current, 0, &bestCount, &bestSolution)
+	for mask := range total {
+		mask := mask
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-	solution := bestSolution.Load().(*[]bool)
-	var result []T
-	for i, bit := range *solution {
-		if bit {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
+			current := make([]bool, n)
+			for i := range parallelDepth {
+				current[i] = (mask>>i)&1 == 1
+			}
+
+			backtrack(ctx, graph, current, parallelDepth, &bestCount, &bestSolution)
+		}()
+	}
+
+	wg.Wait()
+
+	if ctx.Err() != nil {
+		return nil
+	}
+
+	solution := bestSolution.Load().([]bool)
+	result := make([]T, 0, n)
+	for i, include := range solution {
+		if include {
 			result = append(result, graph.indexToVertex[i])
 		}
 	}
@@ -38,7 +76,7 @@ func backtrack[T comparable](
 	ctx context.Context,
 	g *graph[T],
 	current []bool,
-	i int,
+	idx int,
 	bestCount *int32,
 	bestSolution *atomic.Value,
 ) {
@@ -46,29 +84,36 @@ func backtrack[T comparable](
 		return
 	}
 
-	if i == len(current) {
+	if idx == len(current) {
 		if checkSolution(g, current) {
 			count := int32(computeCardinality(current))
-			currBest := atomic.LoadInt32(bestCount)
-
-			if count > currBest {
-				newCopy := make([]bool, len(current))
-				copy(newCopy, current)
-
-				bestSolution.Store(&newCopy)
+			if count > atomic.LoadInt32(bestCount) {
+				newSol := make([]bool, len(current))
+				copy(newSol, current)
 				atomic.StoreInt32(bestCount, count)
+				bestSolution.Store(newSol)
 			}
 		}
 		return
 	}
 
-	current[i] = false
-	backtrack(ctx, g, current, i+1, bestCount, bestSolution)
+	current[idx] = false
+	backtrack(ctx, g, current, idx+1, bestCount, bestSolution)
 
-	if ctx.Err() != nil {
-		return
+	current[idx] = true
+	backtrack(ctx, g, current, idx+1, bestCount, bestSolution)
+
+}
+
+func checkSolution[T comparable](g *graph[T], x []bool) bool {
+	for i := range x {
+		if x[i] {
+			for j := i + 1; j < len(x); j++ {
+				if x[j] && (g.cache.AdjMatrix.Get(i, j) || g.cache.AdjMatrix.Get(j, i)) {
+					return false
+				}
+			}
+		}
 	}
-
-	current[i] = true
-	backtrack(ctx, g, current, i+1, bestCount, bestSolution)
+	return true
 }

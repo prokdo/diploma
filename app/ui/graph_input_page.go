@@ -102,6 +102,7 @@ func NewGraphInputPage(state *AppState) (fyne.CanvasObject, func()) {
 
 		state.Graph = g
 		state.RunConfig = nil
+		state.Results = nil
 		state.GeneratorConfig = &GeneratorConfig{
 			MinVerticesNumber: minV,
 			MaxVerticesNumber: maxV,
@@ -129,6 +130,7 @@ func NewGraphInputPage(state *AppState) (fyne.CanvasObject, func()) {
 			state.Graph = g
 			state.GeneratorConfig = nil
 			state.RunConfig = &RunConfig{IsGraphFixed: true}
+			state.Results = nil
 			resetVisualization()
 			state.NavigationState.NextButton.Enable()
 			visualizeButton.Enable()

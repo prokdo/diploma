@@ -67,6 +67,9 @@ func NewRunConfigPage(state *AppState) (fyne.CanvasObject, func()) {
 		if state.GeneratorConfig == nil && state.Graph != nil {
 			fixGraphCheck.SetChecked(true)
 			fixGraphCheck.Disable()
+		} else {
+			fixGraphCheck.SetChecked(false)
+			fixGraphCheck.Enable()
 		}
 	}
 	return centered, initFunc

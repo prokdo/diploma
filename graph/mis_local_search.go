@@ -2,9 +2,7 @@ package graph
 
 import (
 	"context"
-	"runtime"
 	"slices"
-	"sync"
 )
 
 func MISLocalSearch[T comparable](ctx context.Context, g Graph[T], genome []bool, localIters int) []bool {
@@ -23,48 +21,22 @@ func MISLocalSearch[T comparable](ctx context.Context, g Graph[T], genome []bool
 		if ctx.Err() != nil {
 			return nil
 		}
+
 		improved := false
-		var mu sync.Mutex
+		for j := range n {
+			temp := slices.Clone(best)
+			temp[j] = !temp[j]
 
-		chunkSize := (n + runtime.NumCPU() - 1) / runtime.NumCPU()
-		var wg sync.WaitGroup
-
-		for i := 0; i < n; i += chunkSize {
-			end := min(i+chunkSize, n)
-			wg.Add(1)
-			go func(start, end int) {
-				defer wg.Done()
-				localImprove := false
-				localBest := slices.Clone(best)
-				localFitness := bestFitness
-
-				for j := start; j < end; j++ {
-					if ctx.Err() != nil {
-						return
-					}
-					temp := slices.Clone(localBest)
-					temp[j] = !temp[j]
-					if checkSolutionFast(adj, temp, j) {
-						currentFitness := computeCardinality(temp)
-						if currentFitness > localFitness {
-							localBest = temp
-							localFitness = currentFitness
-							localImprove = true
-						}
-					}
-				}
-
-				mu.Lock()
-				if localImprove && localFitness > bestFitness {
-					best = localBest
-					bestFitness = localFitness
+			if checkSolutionFast(adj, temp, j) {
+				currentFitness := computeCardinality(temp)
+				if currentFitness > bestFitness {
+					best = temp
+					bestFitness = currentFitness
 					improved = true
 				}
-				mu.Unlock()
-			}(i, end)
+			}
 		}
 
-		wg.Wait()
 		if !improved {
 			break
 		}
@@ -74,7 +46,7 @@ func MISLocalSearch[T comparable](ctx context.Context, g Graph[T], genome []bool
 
 func checkSolutionFast(adj *adjMatrix, genome []bool, flippedIdx int) bool {
 	for j := range adj.Size() {
-		if genome[j] && adj.Get(flippedIdx, j) {
+		if genome[j] && (adj.Get(flippedIdx, j) || adj.Get(j, flippedIdx)) {
 			return false
 		}
 	}

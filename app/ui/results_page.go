@@ -43,7 +43,7 @@ func NewResultsPage(state *AppState) (fyne.CanvasObject, func()) {
 				writer := csv.NewWriter(file)
 				defer writer.Flush()
 
-				writer.Write([]string{"ID", "Время (нс)", "F1-фактор", "Мощность"})
+				writer.Write([]string{"ID", "Время (нс)", "F1-score", "Мощность"})
 
 				length := results.Length()
 				for i := range length {
@@ -120,7 +120,7 @@ func buildVirtualResultsList(results binding.UntypedList) fyne.CanvasObject {
 	headers := container.NewGridWithColumns(5,
 		container.NewCenter(widget.NewLabel("ID")),
 		container.NewCenter(widget.NewLabel("Время (нс)")),
-		container.NewCenter(widget.NewLabel("F1-фактор")),
+		container.NewCenter(widget.NewLabel("F1-score")),
 		container.NewCenter(widget.NewLabel("Мощность")),
 	)
 
